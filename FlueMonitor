@@ -1,0 +1,55 @@
+# HestiaAI FlueMonitor  
+_ProMicro nRF52840 + MAX6675 BLE Thermocouple Sensor_
+
+---
+
+## Overview
+
+**FlueMonitor** is a low-power BLE thermocouple node used by the HestiaAI system to measure boiler flue temperature and battery voltage.  
+It automatically enables BLE broadcasting when the boiler is hot and sleeps when idle, sending data to Home Assistant via a **Waveshare ESP32-S3-ETH** proxy running **ESPHome**.
+
+---
+
+## Hardware
+
+- **MCU:** ProMicro-form nRF52840 board (SuperMini derivative)  
+- **Sensor:** MAX6675 thermocouple amplifier  
+- **Power:** 2 × 2500 mAh Li-ion cells (parallel, 3.7 V nominal)  
+- **Charging:** On-board 100 mA (jumper to 300 mA with `BOOST`)  
+- **Gateway:** Waveshare ESP32-S3-ETH (Ethernet-based ESPHome BLE proxy)
+
+### Pin connections
+
+| MAX6675 | nRF52840 Pin | Notes |
+|----------|--------------|-------|
+| VCC | P0.22 | Switched VCC (MAX_POWER_PIN) |
+| SCK | P0.17 | SPI clock |
+| CS | P0.24 | SPI chip select |
+| SO | P0.20 | SPI data out |
+| GND | GND | Common ground |
+
+---
+
+## Firmware Features
+
+- Reads flue temperature every **5 s**.  
+- Reads battery voltage via **SAADC VDDHDIV5** every **hour**.  
+- **BLE ON** when temperature ≥ 30 °C; **BLE OFF** below 28 °C (hysteresis).  
+- Broadcasts two service-data blocks:  
+  - `0x181A` – Environmental Sensing (temperature)  
+  - `0x180F` – Battery Service (voltage)  
+- Performs a **12 s “VBAT burst”** each hour when idle so Home Assistant still sees voltage updates.  
+- Typical current draw:  
+  - **Idle:** 0.4 – 1 mA  
+  - **BLE active:** ≈ 14 mA  
+
+---
+
+## Building and Flashing
+
+1. Open the PlatformIO project in VS Code.  
+2. Select environment: `nicenano` (or any Adafruit nRF52 target).  
+3. Connect board via USB-C and run:
+
+   ```bash
+   pio run -t upload
